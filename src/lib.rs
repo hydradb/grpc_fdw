@@ -1,11 +1,11 @@
-use pgx::*;
 use core::convert::TryFrom;
+use pgx::*;
 mod client;
 
 pg_module_magic!();
 
 struct GRPCFdw {
-    client: *mut client::Client
+    client: *mut client::Client,
 }
 
 impl GRPCFdw {
@@ -15,7 +15,9 @@ impl GRPCFdw {
         let client = client::Client::connect(endpoint).unwrap();
         let boxed_client = Box::into_raw(Box::new(client)) as *mut client::Client;
 
-        Self { client: boxed_client }
+        Self {
+            client: boxed_client,
+        }
     }
 }
 
@@ -29,15 +31,15 @@ impl pgx_fdw::ForeignData for GRPCFdw {
 
     fn execute(&mut self, _desc: &PgTupleDesc) -> Self::RowIterator {
         let mut client = PgBox::<client::Client>::from_pg(self.client);
-        let request = tonic::Request::new(client::pg::HelloRequest {
-            name: "Tonic".into(),
+        let request = tonic::Request::new(client::pg::ExecuteRequest {
+            table: "Tonic".into(),
         });
 
         warning!("OPTIONS {:?}", client);
 
-        let response: client::pg::HelloReply = client.say_hello(request).unwrap().into_inner();
+        let response: Vec<Vec<String>> = client.execute(request).collect();
 
-        vec![vec![response.message]].into_iter()
+        response.into_iter()
     }
 }
 /// ```sql

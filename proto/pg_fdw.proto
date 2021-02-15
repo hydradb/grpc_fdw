@@ -6,8 +6,17 @@ import "google/protobuf/any.proto";
 
 package pg;
 
+message ResultSet {
+    repeated google.protobuf.Value values = 2;
+}
+
+message ExecuteRequest {
+    string table = 1;
+}
+
 service Fdw {
     rpc SayHello (HelloRequest) returns (HelloReply);
+    rpc Execute (ExecuteRequest) returns (stream ResultSet);
 }
 
 message HelloRequest {

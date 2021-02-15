@@ -23,7 +23,11 @@ pgx = "0.1.18"
 pgx-fdw = { git = "https://github.com/drowzy/pgx_fdw.git" }
 pgx-macros = "0.1.18"
 tonic = "0.4"
+
+tokio-stream = { version =  "0.1", features = ["net"] }
+futures = { version = "0.3", default-features = false, features = ["alloc"] }
 prost = "0.7"
+prost-types = "0.7.0"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 
 [build-dependencies]
