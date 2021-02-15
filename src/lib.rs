@@ -1,4 +1,5 @@
 use pgx::*;
+use core::convert::TryFrom;
 mod client;
 
 pg_module_magic!();
@@ -7,29 +8,36 @@ struct GRPCFdw {
     client: *mut client::Client
 }
 
+impl GRPCFdw {
+    pub fn connect(opts: &pgx_fdw::FdwOptions) -> Self {
+        let uri = opts.server_opts.get("server_uri").unwrap();
+        let endpoint = tonic::transport::Endpoint::try_from(uri.clone()).unwrap();
+        let client = client::Client::connect(endpoint).unwrap();
+        let boxed_client = Box::into_raw(Box::new(client)) as *mut client::Client;
+
+        Self { client: boxed_client }
+    }
+}
+
 impl pgx_fdw::ForeignData for GRPCFdw {
     type Item = String;
     type RowIterator = std::vec::IntoIter<Vec<Self::Item>>;
 
     fn begin(opts: &pgx_fdw::FdwOptions) -> Self {
-        warning!("OPTIONS {:?}", opts);
-        let client = client::Client::connect("http://[::1]:50051").unwrap();
-        let b = Box::into_raw(Box::new(client)) as *mut client::Client;
-
-        GRPCFdw { client: b }
+        GRPCFdw::connect(&opts)
     }
 
     fn execute(&mut self, _desc: &PgTupleDesc) -> Self::RowIterator {
         let mut client = PgBox::<client::Client>::from_pg(self.client);
-        let request = tonic::Request::new(client::hello_world::HelloRequest {
+        let request = tonic::Request::new(client::pg::HelloRequest {
             name: "Tonic".into(),
         });
 
         warning!("OPTIONS {:?}", client);
 
-        let response = client.say_hello(request);
-        warning!("RESPONSE {:?}", response);
-        vec![].into_iter()
+        let response: client::pg::HelloReply = client.say_hello(request).unwrap().into_inner();
+
+        vec![vec![response.message]].into_iter()
     }
 }
 /// ```sql
@@ -43,11 +51,9 @@ fn grpc_fdw_handler() -> pg_sys::Datum {
 extension_sql!(
     r#"
     CREATE FOREIGN DATA WRAPPER grpc_fdw_handler HANDLER grpc_fdw_handler NO VALIDATOR;
-    CREATE SERVER user_srv FOREIGN DATA WRAPPER grpc_fdw_handler OPTIONS (dst 'localhost:50051');
-    create foreign table users (
-        id text,
-        name text,
-        email text
+    CREATE SERVER user_srv FOREIGN DATA WRAPPER grpc_fdw_handler OPTIONS (server_uri 'http://[::1]:50051');
+    create foreign table hello_world (
+        message text
     ) server user_srv options (
         table_option '1',
         table_option2 '2'

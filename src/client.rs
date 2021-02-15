@@ -1,17 +1,17 @@
 use tokio::runtime::{Builder, Runtime};
 
-pub mod hello_world {
-    tonic::include_proto!("helloworld");
+pub mod pg {
+    tonic::include_proto!("pg");
 }
 
-use hello_world::{greeter_client::GreeterClient, HelloReply, HelloRequest};
+use pg::{fdw_client::FdwClient, HelloReply, HelloRequest};
 
 pub type StdError = Box<dyn std::error::Error + Send + Sync + 'static>;
 pub type Result<T, E = StdError> = ::std::result::Result<T, E>;
 
 #[derive(Debug)]
 pub struct Client {
-    client: GreeterClient<tonic::transport::Channel>,
+    client: FdwClient<tonic::transport::Channel>,
     rt: Runtime,
 }
 
@@ -22,7 +22,7 @@ impl Client {
         D::Error: Into<StdError>,
     {
         let rt = Builder::new_multi_thread().enable_all().build().unwrap();
-        let client = rt.block_on(GreeterClient::connect(dst))?;
+        let client = rt.block_on(FdwClient::connect(dst))?;
 
         Ok(Self { rt, client })
     }
