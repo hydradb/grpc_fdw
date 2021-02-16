@@ -1,10 +1,9 @@
+use pg::{fdw_client::FdwClient, ExecuteRequest, ResultSet};
 use tokio::runtime::{Builder, Runtime};
 
 pub mod pg {
     tonic::include_proto!("pg");
 }
-
-use pg::{fdw_client::FdwClient, ExecuteRequest, ResultSet};
 
 pub type StdError = Box<dyn std::error::Error + Send + Sync + 'static>;
 pub type Result<T, E = StdError> = ::std::result::Result<T, E>;

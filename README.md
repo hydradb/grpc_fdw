@@ -2,11 +2,10 @@
 
 A GRPC FDW for Postgres!
 
-
 ## Developing
 
 * Start echoserver
 
 ```
-cargo run --bin echo-server
+cd fdw_server && cargo run --bin fdw-server
 ```
