@@ -17,10 +17,7 @@ impl client::pg::ResultSet {
             Some(prost_types::value::Kind::StringValue(str)) => str.into_datum(),
             Some(prost_types::value::Kind::NullValue(_)) => None,
             Some(prost_types::value::Kind::BoolValue(boolean)) => boolean.into_datum(),
-            // Some(Kind::NumberValue(n)) => {
-            //     Value::Number(serde_json::Number::from_f64(n.to_owned()).expect(""))
-            // }
-            // Some(Kind::StringValue(string)) => Value::String(String::from(string)),
+            Some(prost_types::value::Kind::NumberValue(n)) => n.into_datum(),
             //Some(Kind::StructValue(sv)) => {
             //    let mut obj = Map::new();
             //    for (key, value) in sv.fields.iter() {
@@ -50,13 +47,6 @@ impl Iterator for FdwWrapper {
     }
 }
 
-//impl IntoIterator for FdwWrapper {
-//   type Item = Vec<Option<pg_sys::Datum>>;
-//
-//   fn into_iter(self) -> Self::IntoIter {
-//       self.into_iter()
-//   }
-//}
 struct GRPCFdw {
     client: *mut client::Client,
 }
@@ -98,21 +88,6 @@ impl pgx_fdw::ForeignData for GRPCFdw {
     }
 }
 
-//struct GRPCRow {
-//    value: Box<dyn pgx::IntoDatum>
-//}
-
-// impl<T> pgx::IntoDatum for GRPCRow<T>
-// where T: IntoDatum {
-//     fn into_datum(self) -> Option<pg_sys::Datum> {
-//         self.value.into_datum()
-//     }
-
-//     fn type_oid() -> u32 {
-//         T::type_oid()
-//     }
-// }
-
 /// ```sql
 /// CREATE FUNCTION grpc_fdw_handler() RETURNS fdw_handler LANGUAGE c AS 'MODULE_PATHNAME', 'grpc_fdw_handler_wrapper';
 /// ```
@@ -127,7 +102,8 @@ extension_sql!(
     CREATE SERVER user_srv FOREIGN DATA WRAPPER grpc_fdw_handler OPTIONS (server_uri 'http://[::1]:50051');
     create foreign table hello_world (
         message text,
-        from_server text
+        from_server text,
+        server_version integer
     ) server user_srv options (
         table_option '1',
         table_option2 '2'

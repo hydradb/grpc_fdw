@@ -1,6 +1,6 @@
-use futures::{Stream, StreamExt};
+use futures::Stream;
 use pg::fdw_server::{Fdw, FdwServer};
-use pg::{ExecuteRequest, HelloReply, HelloRequest, ResultSet};
+use pg::{ExecuteRequest, ResultSet};
 use prost_types::Value;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -18,19 +18,6 @@ pub struct EchoFdw {
 
 #[tonic::async_trait]
 impl Fdw for EchoFdw {
-    async fn say_hello(
-        &self,
-        request: Request<HelloRequest>,
-    ) -> Result<Response<HelloReply>, Status> {
-        println!("Got a request: {:?}", request);
-
-        let reply = pg::HelloReply {
-            message: format!("Hello {}!", request.into_inner().name).into(),
-        };
-
-        Ok(Response::new(reply))
-    }
-
     type ExecuteStream =
         Pin<Box<dyn Stream<Item = Result<ResultSet, Status>> + Send + Sync + 'static>>;
 
@@ -61,13 +48,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Value {
                 kind: Some(prost_types::value::Kind::StringValue(
                     "Server Says Hello".into(),
-                )), 
+                )),
             },
             Value {
-                kind: Some(prost_types::value::Kind::StringValue(
-                    "PG-FDWServer".into(),
-                )), 
-            }
+                kind: Some(prost_types::value::Kind::StringValue("PG-FDWServer".into())),
+            },
+            Value {
+                kind: Some(prost_types::value::Kind::NumberValue(22 as f64)),
+            },
         ],
     };
 

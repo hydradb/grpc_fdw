@@ -1,15 +1,10 @@
-use pgx::*;
-use prost_types::value::Kind;
 use tokio::runtime::{Builder, Runtime};
-use tonic::Streaming;
 
 pub mod pg {
     tonic::include_proto!("pg");
 }
 
-use pg::{fdw_client::FdwClient, ExecuteRequest, HelloReply, HelloRequest, ResultSet};
-
-use crate::datum;
+use pg::{fdw_client::FdwClient, ExecuteRequest, ResultSet};
 
 pub type StdError = Box<dyn std::error::Error + Send + Sync + 'static>;
 pub type Result<T, E = StdError> = ::std::result::Result<T, E>;
@@ -32,13 +27,6 @@ impl Client {
         Ok(Self { rt, client })
     }
 
-    pub fn say_hello(
-        &mut self,
-        request: impl tonic::IntoRequest<HelloRequest>,
-    ) -> Result<tonic::Response<HelloReply>, tonic::Status> {
-        self.rt.block_on(self.client.say_hello(request))
-    }
-    // Result<tonic::Response<Streaming<ResultSet>>, tonic::Status>
     pub fn execute(&mut self, request: impl tonic::IntoRequest<ExecuteRequest>) -> Vec<ResultSet> {
         let mut stream = self
             .rt
