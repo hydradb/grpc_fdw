@@ -4,6 +4,59 @@ mod client;
 
 pg_module_magic!();
 
+impl client::pg::ResultSet {
+    pub fn into_datums(self) -> Vec<Option<pg_sys::Datum>> {
+        self.values
+            .into_iter()
+            .map(Self::value_into_datum)
+            .collect()
+    }
+
+    fn value_into_datum(value: prost_types::Value) -> Option<pg_sys::Datum> {
+        match value.kind {
+            Some(prost_types::value::Kind::StringValue(str)) => str.into_datum(),
+            Some(prost_types::value::Kind::NullValue(_)) => None,
+            Some(prost_types::value::Kind::BoolValue(boolean)) => boolean.into_datum(),
+            // Some(Kind::NumberValue(n)) => {
+            //     Value::Number(serde_json::Number::from_f64(n.to_owned()).expect(""))
+            // }
+            // Some(Kind::StringValue(string)) => Value::String(String::from(string)),
+            //Some(Kind::StructValue(sv)) => {
+            //    let mut obj = Map::new();
+            //    for (key, value) in sv.fields.iter() {
+            //        obj.insert(String::from(key), as_json(&value.kind));
+            //    }
+
+            //    Value::Object(obj)
+            //}
+            // Some(Kind::ListValue(list)) => {
+            //     Value::Array(list.values.iter().map(|v| as_json(&v.kind)).collect())
+            // }
+            // None => None,
+            _ => None,
+        }
+    }
+}
+struct FdwWrapper(Vec<client::pg::ResultSet>);
+
+impl Iterator for FdwWrapper {
+    type Item = Vec<Option<pg_sys::Datum>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.0.pop() {
+            Some(rs) => Some(rs.into_datums()),
+            None => None,
+        }
+    }
+}
+
+//impl IntoIterator for FdwWrapper {
+//   type Item = Vec<Option<pg_sys::Datum>>;
+//
+//   fn into_iter(self) -> Self::IntoIter {
+//       self.into_iter()
+//   }
+//}
 struct GRPCFdw {
     client: *mut client::Client,
 }
@@ -22,8 +75,8 @@ impl GRPCFdw {
 }
 
 impl pgx_fdw::ForeignData for GRPCFdw {
-    type Item = String;
-    type RowIterator = std::vec::IntoIter<Vec<Self::Item>>;
+    type Item = Option<pg_sys::Datum>;
+    type RowIterator = FdwWrapper;
 
     fn begin(opts: &pgx_fdw::FdwOptions) -> Self {
         GRPCFdw::connect(&opts)
@@ -37,11 +90,29 @@ impl pgx_fdw::ForeignData for GRPCFdw {
 
         warning!("OPTIONS {:?}", client);
 
-        let response: Vec<Vec<String>> = client.execute(request).collect();
+        let response = client.execute(request);
 
-        response.into_iter()
+        let wrapper = FdwWrapper(response);
+
+        wrapper.into_iter()
     }
 }
+
+//struct GRPCRow {
+//    value: Box<dyn pgx::IntoDatum>
+//}
+
+// impl<T> pgx::IntoDatum for GRPCRow<T>
+// where T: IntoDatum {
+//     fn into_datum(self) -> Option<pg_sys::Datum> {
+//         self.value.into_datum()
+//     }
+
+//     fn type_oid() -> u32 {
+//         T::type_oid()
+//     }
+// }
+
 /// ```sql
 /// CREATE FUNCTION grpc_fdw_handler() RETURNS fdw_handler LANGUAGE c AS 'MODULE_PATHNAME', 'grpc_fdw_handler_wrapper';
 /// ```
@@ -55,7 +126,8 @@ extension_sql!(
     CREATE FOREIGN DATA WRAPPER grpc_fdw_handler HANDLER grpc_fdw_handler NO VALIDATOR;
     CREATE SERVER user_srv FOREIGN DATA WRAPPER grpc_fdw_handler OPTIONS (server_uri 'http://[::1]:50051');
     create foreign table hello_world (
-        message text
+        message text,
+        from_server text
     ) server user_srv options (
         table_option '1',
         table_option2 '2'

@@ -9,6 +9,8 @@ pub mod pg {
 
 use pg::{fdw_client::FdwClient, ExecuteRequest, HelloReply, HelloRequest, ResultSet};
 
+use crate::datum;
+
 pub type StdError = Box<dyn std::error::Error + Send + Sync + 'static>;
 pub type Result<T, E = StdError> = ::std::result::Result<T, E>;
 
@@ -16,17 +18,6 @@ pub type Result<T, E = StdError> = ::std::result::Result<T, E>;
 pub struct Client {
     client: FdwClient<tonic::transport::Channel>,
     rt: Runtime,
-}
-
-fn from_value(value: prost_types::Value) -> String {
-    match value.kind {
-        Some(Kind::StringValue(str)) => str,
-        _ => "not_f".into(),
-    }
-}
-
-fn unpack(msg: ResultSet) -> Vec<String> {
-    msg.values.into_iter().map(from_value).collect()
 }
 
 impl Client {
@@ -48,10 +39,7 @@ impl Client {
         self.rt.block_on(self.client.say_hello(request))
     }
     // Result<tonic::Response<Streaming<ResultSet>>, tonic::Status>
-    pub fn execute(
-        &mut self,
-        request: impl tonic::IntoRequest<ExecuteRequest>,
-    ) -> impl Iterator<Item = Vec<String>> {
+    pub fn execute(&mut self, request: impl tonic::IntoRequest<ExecuteRequest>) -> Vec<ResultSet> {
         let mut stream = self
             .rt
             .block_on(self.client.execute(request))
@@ -59,9 +47,9 @@ impl Client {
             .into_inner();
         let mut v = Vec::new();
         while let Some(msg) = self.rt.block_on(stream.message()).unwrap() {
-            v.push(unpack(msg));
+            v.push(msg);
         }
 
-        v.into_iter()
+        v
     }
 }

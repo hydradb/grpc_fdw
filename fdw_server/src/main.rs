@@ -57,11 +57,18 @@ impl Fdw for EchoFdw {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse()?;
     let result = ResultSet {
-        values: vec![Value {
-            kind: Some(prost_types::value::Kind::StringValue(
-                "Server Says Hello".into(),
-            )),
-        }],
+        values: vec![
+            Value {
+                kind: Some(prost_types::value::Kind::StringValue(
+                    "Server Says Hello".into(),
+                )), 
+            },
+            Value {
+                kind: Some(prost_types::value::Kind::StringValue(
+                    "PG-FDWServer".into(),
+                )), 
+            }
+        ],
     };
 
     let fdw = EchoFdw {
