@@ -28,10 +28,9 @@ impl GRPCFdw {
         let uri = opts.server_opts.get("server_uri").unwrap();
         let endpoint = tonic::transport::Endpoint::try_from(uri.clone()).unwrap();
         let client = client::Client::connect(endpoint).unwrap();
-        let boxed_client = Box::into_raw(Box::new(client)) as *mut client::Client;
 
         Self {
-            client: boxed_client,
+            client: Box::into_raw(Box::new(client)) as *mut client::Client,
         }
     }
 }
