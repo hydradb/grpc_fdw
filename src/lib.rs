@@ -1,39 +1,11 @@
 use core::convert::TryFrom;
 use pgx::*;
+
 mod client;
+mod rs;
 
 pg_module_magic!();
 
-impl client::pg::ResultSet {
-    pub fn into_datums(self) -> Vec<Option<pg_sys::Datum>> {
-        self.values
-            .into_iter()
-            .map(Self::value_into_datum)
-            .collect()
-    }
-
-    fn value_into_datum(value: prost_types::Value) -> Option<pg_sys::Datum> {
-        match value.kind {
-            Some(prost_types::value::Kind::StringValue(str)) => str.into_datum(),
-            Some(prost_types::value::Kind::NullValue(_)) => None,
-            Some(prost_types::value::Kind::BoolValue(boolean)) => boolean.into_datum(),
-            Some(prost_types::value::Kind::NumberValue(n)) => n.into_datum(),
-            //Some(Kind::StructValue(sv)) => {
-            //    let mut obj = Map::new();
-            //    for (key, value) in sv.fields.iter() {
-            //        obj.insert(String::from(key), as_json(&value.kind));
-            //    }
-
-            //    Value::Object(obj)
-            //}
-            // Some(Kind::ListValue(list)) => {
-            //     Value::Array(list.values.iter().map(|v| as_json(&v.kind)).collect())
-            // }
-            // None => None,
-            _ => None,
-        }
-    }
-}
 struct FdwWrapper(Vec<client::pg::ResultSet>);
 
 impl Iterator for FdwWrapper {
@@ -78,13 +50,9 @@ impl pgx_fdw::ForeignData for GRPCFdw {
             table: "Tonic".into(),
         });
 
-        warning!("OPTIONS {:?}", client);
-
         let response = client.execute(request);
 
-        let wrapper = FdwWrapper(response);
-
-        wrapper.into_iter()
+        FdwWrapper(response).into_iter()
     }
 }
 
