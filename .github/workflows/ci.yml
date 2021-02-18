@@ -34,7 +34,7 @@ jobs:
       - name: Install Rust
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
-          ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
+          PATH="/home/${USER}/.cargo/bin:${PATH}"
           cargo install cargo-pgx
           cargo install cargo-deb
           cargo pgx init --pg13=/usr/lib/postgresql/13/bin/pg_config
