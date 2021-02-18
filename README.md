@@ -3,6 +3,10 @@
 A GRPC FDW for Postgres!
 
 ## Developing
+```
+cargo update
+cargp pgx run pg13
+```
 
 * Start echoserver
 
