@@ -2,6 +2,7 @@
 name = "grpc_fdw"
 version = "0.0.0"
 edition = "2018"
+authors = ["Simon Thörnqvist <simon.thornqvist@gmail.com>"]
 
 [lib]
 crate-type = ["cdylib"]

@@ -9,3 +9,10 @@ A GRPC FDW for Postgres!
 ```
 cd fdw_server && cargo run --bin fdw-server
 ```
+
+## Release
+```
+cargo pgx package
+
+cargo deb
+```
