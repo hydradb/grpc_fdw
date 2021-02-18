@@ -2,7 +2,7 @@
 
 name: CI
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
@@ -28,16 +28,16 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Install system deps
         run: |
-          apt-get update -y -qq --fix-missing
-          apt-get install -y wget gnupg
-          echo "deb http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main" >> /etc/apt/sources.list.d/pgdg.list
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-          apt update
-          apt-get update -y --fix-missing
-          apt-get install -y curl
+          sudo apt-get update -y -qq --fix-missing
+          sudo apt-get install -y wget gnupg
+          sudo echo "deb http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main" >> /etc/apt/sources.list.d/pgdg.list
+          sudo wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+          sudo apt update
+          sudo apt-get update -y --fix-missing
+          sudo apt-get install -y curl
 
-          apt-get install -y git
-          apt-get install -y clang-9 llvm-9 gcc make build-essential libz-dev zlib1g-dev strace libssl-dev pkg-config postgresql-13 postgresql-server-dev-13 ruby ruby-dev rubygems build-essential
+          sudo apt-get install -y git
+          sudo apt-get install -y clang-9 llvm-9 gcc make build-essential libz-dev zlib1g-dev strace libssl-dev pkg-config postgresql-13 postgresql-server-dev-13 ruby ruby-dev rubygems build-essential
       - name: Install system deps
         run: |
           RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
@@ -45,4 +45,3 @@ jobs:
           cargo install cargo-pgx
           cargo install cargo-deb
           cargo pgx init --pg13=/usr/lib/postgresql/13/bin/pg_config
-
