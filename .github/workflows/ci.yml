@@ -38,3 +38,14 @@ jobs:
           cargo install cargo-pgx
           cargo install cargo-deb
           cargo pgx init --pg13=/usr/lib/postgresql/13/bin/pg_config
+
+      - name: build pkg
+        run: |
+          cargo pgx package
+          cargo deb
+
+      - name: Archive pkg
+        uses: actions/upload-artifact@v2
+        with:
+          name: grpc-fdw_pkg
+          path: target/debian/*.deb
