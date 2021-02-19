@@ -40,3 +40,17 @@ panic = "unwind"
 opt-level = 3
 lto = "fat"
 codegen-units = 1
+
+[package.metadata.deb]
+name = "grpc_fdw"
+maintainer = "Simon Thörnqvist <simon.thornqvist@gmail.com>"
+copyright = "2021, Simon Thörnqvist <sanderhahn@gmail.com>"
+extended-description = "GRPC Foreign Data Wrappers for PostgreSQL"
+depends = "$auto"
+section = "database"
+priority = "optional"
+assets = [
+    ["target/release/grpc_fdw-pg13/usr/lib/postgresql/13/lib/grpc_fdw.so", "usr/lib/postgresql/13/lib/", "644"],
+    ["target/release/grpc_fdw-pg13/usr/share/postgresql/13/extension/grpc_fdw.control", "usr/share/postgresql/13/extension/", "644"],
+    ["target/release/grpc_fdw-pg13/usr/share/postgresql/13/extension/grpc_fdw--1.0.sql", "usr/share/postgresql/13/extension/", "644"],
+]

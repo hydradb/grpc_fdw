@@ -20,3 +20,8 @@ cargo pgx package
 
 cargo deb
 ```
+
+## inspect
+```
+dpkg -c ./target/debian/grpc_fdw_0.0.0_amd64.deb
+```
