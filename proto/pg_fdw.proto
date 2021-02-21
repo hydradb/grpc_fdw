@@ -6,12 +6,119 @@ import "google/protobuf/any.proto";
 
 package pg;
 
+enum Oid {
+    BOOLOID = 0;
+    BYTEAOID = 2;
+    CHAROID = 3;
+    NAMEOID = 4;
+    INT8OID = 5;
+    INT2OID = 6;
+    INT2VECTOROID = 7;
+    INT4OID = 8;
+    REGPROCOID = 9;
+    TEXTOID = 10;
+    OIDOID = 11;
+    TIDOID = 12;
+    XIDOID = 13;
+    CIDOID = 14;
+    OIDVECTOROID = 15;
+    JSONOID = 16;
+    XMLOID = 17;
+    PGNODETREEOID = 18;
+    PGNDISTINCTOID = 19;
+    PGDEPENDENCIESOID = 20;
+    PGMCVLISTOID = 21;
+    PGDDLCOMMANDOID = 22;
+    XID8OID = 23;
+    POINTOID = 24;
+    LSEGOID = 25;
+    PATHOID = 26;
+    BOXOID = 27;
+    POLYGONOID = 28;
+    LINEOID = 29;
+    FLOAT4OID = 30;
+    FLOAT8OID = 31;
+    UNKNOWNOID = 32;
+    CIRCLEOID = 33;
+    CASHOID = 34;
+    MACADDROID =35;
+    INETOID = 36;
+    CIDROID = 37;
+    MACADDR8OID = 38;
+    ACLITEMOID = 39;
+    BPCHAROID = 40;
+    VARCHAROID = 41;
+    DATEOID = 42;
+    TIMEOID = 43;
+    TIMESTAMPOID = 45;
+    TIMESTAMPTZOID = 46;
+    INTERVALOID = 47;
+    TIMETZOID = 48;
+    BITOID = 49;
+    VARBITOID = 50;
+    NUMERICOID = 51;
+    REFCURSOROID = 52;
+    REGPROCEDUREOID = 53;
+    REGOPEROID = 54;
+    REGOPERATOROID = 55;
+    REGCLASSOID = 56;
+    REGCOLLATIONOID = 57;
+    REGTYPEOID = 58;
+    REGROLEOID = 59;
+    REGNAMESPACEOID = 60;
+    UUIDOID = 61;
+    LSNOID = 62;
+    TSVECTOROID = 63;
+    GTSVECTOROID = 64;
+    TSQUERYOID = 65;
+    REGCONFIGOID = 66;
+    REGDICTIONARYOID = 67;
+    JSONBOID = 68;
+    JSONPATHOID = 69;
+    TXID_SNAPSHOTOID = 70;
+    PG_SNAPSHOTOID = 71;
+    INT4RANGEOID = 72;
+    NUMRANGEOID = 78;
+    TSRANGEOID = 79;
+    TSTZRANGEOID = 80;
+    DATERANGEOID = 81;
+    INT8RANGEOID = 82;
+    RECORDOID = 83;
+    RECORDARRAYOID = 84;
+    CSTRINGOID = 85;
+    ANYOID = 86;
+    ANYARRAYOID = 87;
+    VOIDOID = 88;
+    TRIGGEROID = 89;
+    EVTTRIGGEROID = 90;
+    LANGUAGE_HANDLEROID = 91;
+    INTERNALOID = 92;
+    ANYELEMENTOID = 93;
+    ANYNONARRAYOID = 94;
+    ANYENUMOID = 95;
+    FDW_HANDLEROID = 96;
+    INDEX_AM_HANDLEROID = 97;
+    TSM_HANDLEROID = 98;
+    TABLE_AM_HANDLEROID = 99;
+    ANYRANGEOID = 100;
+    ANYCOMPATIBLEOID = 101;
+    ANYCOMPATIBLEARRAYOID = 102;
+    ANYCOMPATIBLENONARRAYOID = 103;
+    ANYCOMPATIBLERANGEOI = 104;
+}
+
 message ResultSet {
     repeated google.protobuf.Value values = 2;
 }
 
+message Type {
+    int32 index = 1;
+    Oid oid = 2; 
+}
+
 message ExecuteRequest {
     string table = 1;
+    map<string, Type> tupdesc = 2;
 }
 
 service Fdw {

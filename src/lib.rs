@@ -1,5 +1,7 @@
 use core::convert::TryFrom;
 use pgx::*;
+use std::collections::HashMap;
+
 
 mod client;
 mod rs;
@@ -17,6 +19,21 @@ impl Iterator for FdwWrapper {
             None => None,
         }
     }
+}
+
+fn tupdesc_into_map(desc: &PgTupleDesc) -> HashMap<String, client::pg::Type> {
+    let mut map = HashMap::new();
+    for (i, attr) in desc.iter().enumerate() {
+
+        let name: String = attr.name().into();
+
+        map.insert(name, client::pg::Type {
+            index: i as i32,
+            oid: client::pg::Oid::Textoid as i32
+        });
+    };
+
+    map
 }
 
 struct GRPCFdw {
@@ -43,10 +60,11 @@ impl pgx_fdw::ForeignData for GRPCFdw {
         GRPCFdw::connect(&opts)
     }
 
-    fn execute(&mut self, _desc: &PgTupleDesc) -> Self::RowIterator {
+    fn execute(&mut self, desc: &PgTupleDesc) -> Self::RowIterator {
         let mut client = PgBox::<client::Client>::from_pg(self.client);
         let request = tonic::Request::new(client::pg::ExecuteRequest {
             table: "Tonic".into(),
+            tupdesc: tupdesc_into_map(desc)
         });
 
         let response = client.execute(request);
