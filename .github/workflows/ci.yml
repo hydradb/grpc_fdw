@@ -45,6 +45,7 @@ jobs:
 
       - name: install Rust
         run: |
+          RUSTFLAGS="-C target-feature=-crt-static"
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
           PATH="$HOME/.cargo/bin:${PATH}"
           source $HOME/.cargo/env
