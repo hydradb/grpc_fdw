@@ -15,67 +15,6 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build-alpine:
-    runs-on: ubuntu-latest
-    container: postgres:13-alpine
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: install deps
-        run: |
-          apk add --no-cache \
-          git \
-          curl \
-          bash \
-          ruby-dev \
-          ruby-etc \
-          musl-dev \
-          make \
-          gcc \
-          coreutils \
-          util-linux-dev \
-          musl-dev \
-          openssl-dev \
-          clang-libs \
-          tar
-
-      - name: install fpm gem
-        run: gem install --no-document fpm
-
-      - name: install Rust
-        run: |
-          export RUSTFLAGS="-C target-feature=-crt-static"
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
-          PATH="$HOME/.cargo/bin:${PATH}"
-          source $HOME/.cargo/env
-          cargo install cargo-pgx
-          echo $(which pg_config)
-          cargo pgx init --pg13=$(which pg_config)
-
-      - name: init pgx
-        run: cargo pgx init --pg13=$(which pg_config)
-
-      - name: build release
-        run: cargo build --release
-
-      - name: build apk
-        run: |
-          fpm \
-          -s dir \
-          -t apk \
-          -n grpc_fdw-13 \
-          -v 0.0.1 \
-          -p ./grpc_fdw_13-0.0.1.$(uname -m).apk \
-          -a $(uname -m) \
-          ./build/target/release/grpc_fdw-pg13
-
-      - name: Archive pkg
-        uses: actions/upload-artifact@v2
-        with:
-          name: grpc-fdw_alpine-pkg
-          path: ./*.apk
-
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
