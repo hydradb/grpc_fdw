@@ -50,7 +50,8 @@ jobs:
           PATH="$HOME/.cargo/bin:${PATH}"
           source $HOME/.cargo/env
           cargo install cargo-pgx
-          cargo pgx init --pg13=/usr/lib/postgresql/13/bin/pg_config
+          echo $(which pg_config)
+          cargo pgx init --pg13=$(which pg_config)
 
       - name: build apk
         run: |
