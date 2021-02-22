@@ -46,9 +46,27 @@ jobs:
       - name: install Rust
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
-          PATH="/home/${USER}/.cargo/bin:${PATH}"
+          PATH="$HOME/.cargo/bin:${PATH}"
+          source $HOME/.cargo/env
           cargo install cargo-pgx
           cargo pgx init --pg13=$(which pg_config)
+
+      - name: build apk
+        run: |
+          fpm \
+          -s dir \
+          -t apk \
+          -n grpc_fdw-13 \
+          -v 0.0.1 \
+          -p ./grpc_fdw_13-0.0.1.$(uname -m).apk \
+          -a $(uname -m) \
+          ./build/target/release/grpc_fdw-pg13
+
+      - name: Archive pkg
+        uses: actions/upload-artifact@v2
+        with:
+          name: grpc-fdw_alpine-pkg
+          path: ./*.apk
 
   build:
     # The type of runner that the job will run on
