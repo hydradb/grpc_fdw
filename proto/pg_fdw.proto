@@ -104,7 +104,7 @@ enum Oid {
     ANYCOMPATIBLEOID = 101;
     ANYCOMPATIBLEARRAYOID = 102;
     ANYCOMPATIBLENONARRAYOID = 103;
-    ANYCOMPATIBLERANGEOI = 104;
+    ANYCOMPATIBLERANGEOID = 104;
 }
 
 message ResultSet {
@@ -113,7 +113,7 @@ message ResultSet {
 
 message Type {
     int32 index = 1;
-    Oid oid = 2; 
+    Oid oid = 2;
 }
 
 message ExecuteRequest {
