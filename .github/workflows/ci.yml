@@ -17,7 +17,8 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build-alpine:
-    runs-on: postgres:13-alpine
+    runs-on: ubuntu-latest
+    container: postgres:13-alpine
     steps:
       - uses: actions/checkout@v2
 
