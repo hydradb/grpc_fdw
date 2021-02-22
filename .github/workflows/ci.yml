@@ -53,6 +53,12 @@ jobs:
           echo $(which pg_config)
           cargo pgx init --pg13=$(which pg_config)
 
+      - name: init pgx
+        run: cargo pgx init --pg13=$(which pg_config)
+
+      - name: build release
+        run: cargo build --release
+
       - name: build apk
         run: |
           fpm \
