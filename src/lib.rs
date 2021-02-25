@@ -22,20 +22,18 @@ impl Iterator for FdwWrapper {
 }
 
 fn tupdesc_into_map(desc: &PgTupleDesc) -> HashMap<String, client::pg::Type> {
-    let mut map = HashMap::new();
-    for (i, attr) in desc.iter().enumerate() {
-        let name: String = attr.name().into();
-
-        map.insert(
-            name,
-            client::pg::Type {
-                index: i as i32,
-                oid: client::pg::Oid::from(attr.type_oid()) as i32,
-            },
-        );
-    }
-
-    map
+    desc.iter()
+        .enumerate()
+        .map(|(i, attr)| {
+            (
+                attr.name().into(),
+                client::pg::Type {
+                    index: i as i32,
+                    oid: client::pg::Oid::from(attr.type_oid()) as i32,
+                },
+            )
+        })
+        .collect()
 }
 
 struct GRPCFdw {
