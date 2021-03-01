@@ -38,6 +38,8 @@ fn tupdesc_into_map(desc: &PgTupleDesc) -> HashMap<String, client::pg::Type> {
 
 struct GRPCFdw {
     client: *mut client::Client,
+    table_name: String,
+    namespace: String
 }
 
 impl GRPCFdw {
@@ -48,6 +50,8 @@ impl GRPCFdw {
 
         Self {
             client: Box::into_raw(Box::new(client)) as *mut client::Client,
+            table_name: opts.table_name.clone(),
+            namespace: opts.table_namespace.clone()
         }
     }
 }
@@ -63,7 +67,7 @@ impl pgx_fdw::ForeignData for GRPCFdw {
     fn execute(&mut self, desc: &PgTupleDesc) -> Self::RowIterator {
         let mut client = PgBox::<client::Client>::from_pg(self.client);
         let request = tonic::Request::new(client::pg::ExecuteRequest {
-            table: "Tonic".into(),
+            table: self.table_name.clone(),
             tupdesc: tupdesc_into_map(desc),
         });
 
