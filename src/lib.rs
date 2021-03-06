@@ -39,7 +39,7 @@ fn tupdesc_into_map(desc: &PgTupleDesc) -> HashMap<String, client::pg::Type> {
 struct GRPCFdw {
     client: *mut client::Client,
     table_name: String,
-    namespace: String
+    namespace: String,
 }
 
 impl GRPCFdw {
@@ -51,7 +51,7 @@ impl GRPCFdw {
         Self {
             client: Box::into_raw(Box::new(client)) as *mut client::Client,
             table_name: opts.table_name.clone(),
-            namespace: opts.table_namespace.clone()
+            namespace: opts.table_namespace.clone(),
         }
     }
 }

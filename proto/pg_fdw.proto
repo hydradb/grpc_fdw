@@ -121,6 +121,28 @@ message ExecuteRequest {
     map<string, Type> tupdesc = 2;
 }
 
+message InsertRequest {
+    string table = 1;
+    map<string, Type> tupdesc = 2;
+    repeated google.protobuf.Value tuples = 3;
+}
+
+message UpdateRequest {
+    string table = 1;
+    map<string, Type> tupdesc = 2;
+    repeated google.protobuf.Value tuples = 3;
+    repeated google.protobuf.Value indices = 4;
+}
+
+message DeleteRequest {
+    string table = 1;
+    map<string, Type> tupdesc = 2;
+    repeated google.protobuf.Value indices = 3;
+}
+
 service Fdw {
     rpc Execute (ExecuteRequest) returns (stream ResultSet);
+    rpc Insert (InsertRequest) returns (stream ResultSet);
+    rpc Update (UpdateRequest) returns (stream ResultSet);
+    rpc Delete (DeleteRequest) returns (stream ResultSet);
 }
