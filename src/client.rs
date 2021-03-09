@@ -1,4 +1,5 @@
-use pg::{fdw_client::FdwClient, ExecuteRequest, ResultSet};
+use pg::{fdw_client::FdwClient, ExecuteRequest, InsertRequest, ResultSet};
+use pgx::warning;
 use tokio::runtime::{Builder, Runtime};
 
 pub mod pg {
@@ -38,5 +39,17 @@ impl Client {
         }
 
         v
+    }
+
+    pub fn insert(&mut self, request: impl tonic::IntoRequest<InsertRequest>) -> () {
+        let mut stream = self
+            .rt
+            .block_on(self.client.insert(request))
+            .unwrap()
+            .into_inner();
+
+        while let Some(msg) = self.rt.block_on(stream.message()).unwrap() {
+            warning!("{:?}", msg)
+        }
     }
 }

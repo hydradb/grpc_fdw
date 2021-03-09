@@ -1,6 +1,8 @@
 use core::convert::TryFrom;
 use pgx::*;
-use std::collections::HashMap;
+use prost_types::value::*;
+use serde_json::Value as JsonValue;
+use std::collections::{BTreeMap, HashMap};
 
 mod client;
 mod oid;
@@ -32,6 +34,74 @@ fn tupdesc_into_map(desc: &PgTupleDesc) -> HashMap<String, client::pg::Type> {
                     oid: client::pg::Oid::from(attr.type_oid()) as i32,
                 },
             )
+        })
+        .collect()
+}
+
+fn from_json(value: &serde_json::Value) -> prost_types::Value {
+    let kind = match value {
+        JsonValue::Null => Kind::NullValue(0),
+        JsonValue::Number(num) => Kind::NumberValue(num.as_f64().unwrap()),
+        JsonValue::String(str) => Kind::StringValue(str.clone()),
+        JsonValue::Bool(bool) => Kind::BoolValue(bool.clone()),
+        JsonValue::Array(arr) => {
+            let values = arr.iter().map(|v| from_json(v)).collect();
+            let lv = prost_types::ListValue { values };
+
+            Kind::ListValue(lv)
+        }
+        JsonValue::Object(map) => {
+            let fields: BTreeMap<String, prost_types::Value> =
+                map.iter().map(|(k, v)| (k.clone(), from_json(v))).collect();
+
+            Kind::StructValue(prost_types::Struct { fields })
+        }
+    };
+
+    prost_types::Value { kind: Some(kind) }
+}
+
+fn from_datum<T: FromDatum>(datum: &Option<pg_sys::Datum>, typoid: &PgOid) -> Option<T> {
+    match datum {
+        Some(d) => unsafe { T::from_datum(*d, false, typoid.value()) },
+        None => None,
+    }
+}
+
+fn into_value(
+    oid: &pgx::PgBuiltInOids,
+    datum: &Option<pg_sys::Datum>,
+    typeoid: &PgOid,
+) -> prost_types::Value {
+    match oid {
+        PgBuiltInOids::JSONBOID => {
+            let JsonB(v) = from_datum::<JsonB>(datum, typeoid).unwrap();
+
+            from_json(&v)
+        }
+        PgBuiltInOids::TEXTOID => {
+            let v = from_datum::<String>(datum, typeoid).unwrap();
+
+            prost_types::Value {
+                kind: Some(Kind::StringValue(v)),
+            }
+        }
+        PgBuiltInOids::INT8OID => {
+            let v = from_datum::<i32>(datum, typeoid).unwrap();
+            prost_types::Value {
+                kind: Some(Kind::NumberValue(v.into())),
+            }
+        }
+        _ => error!("TODO"),
+    }
+}
+
+fn into_values(row: Vec<pgx_fdw::Tuple>) -> Vec<prost_types::Value> {
+    row.iter()
+        .map(|(_name, datum, typeoid)| match typeoid {
+            PgOid::BuiltIn(built_in) => into_value(built_in, datum, typeoid),
+            PgOid::Custom(_) => into_value(&PgBuiltInOids::ANYOID, datum, typeoid),
+            PgOid::InvalidOid => error!("Invalid Oid"),
         })
         .collect()
 }
@@ -75,6 +145,35 @@ impl pgx_fdw::ForeignData for GRPCFdw {
 
         FdwWrapper(response).into_iter()
     }
+
+    fn insert(&self, desc: &PgTupleDesc, row: Vec<pgx_fdw::Tuple>) -> Option<Vec<pgx_fdw::Tuple>> {
+        let mut client = PgBox::<client::Client>::from_pg(self.client);
+        let request = tonic::Request::new(client::pg::InsertRequest {
+            table: self.table_name.clone(),
+            tupdesc: tupdesc_into_map(desc),
+            tuples: into_values(row),
+        });
+
+        let _ = client.insert(request);
+        None
+    }
+
+    fn update(
+        &self,
+        _desc: &PgTupleDesc,
+        _row: Vec<pgx_fdw::Tuple>,
+        _indices: Vec<pgx_fdw::Tuple>,
+    ) -> Option<Vec<pgx_fdw::Tuple>> {
+        todo!()
+    }
+
+    fn delete(
+        &self,
+        _desc: &PgTupleDesc,
+        _indices: Vec<pgx_fdw::Tuple>,
+    ) -> Option<Vec<pgx_fdw::Tuple>> {
+        todo!()
+    }
 }
 
 /// ```sql
@@ -84,6 +183,7 @@ impl pgx_fdw::ForeignData for GRPCFdw {
 fn grpc_fdw_handler() -> pg_sys::Datum {
     pgx_fdw::FdwState::<GRPCFdw>::into_datum()
 }
+
 #[cfg(any(test, feature = "pg_test"))]
 mod tests {
     use pgx::*;
