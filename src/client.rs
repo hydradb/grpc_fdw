@@ -1,4 +1,6 @@
-use pg::{fdw_client::FdwClient, ExecuteRequest, InsertRequest, ResultSet};
+use pg::{
+    fdw_client::FdwClient, DeleteRequest, ExecuteRequest, InsertRequest, ResultSet, UpdateRequest,
+};
 use pgx::warning;
 use tokio::runtime::{Builder, Runtime};
 
@@ -45,6 +47,30 @@ impl Client {
         let mut stream = self
             .rt
             .block_on(self.client.insert(request))
+            .unwrap()
+            .into_inner();
+
+        while let Some(msg) = self.rt.block_on(stream.message()).unwrap() {
+            warning!("{:?}", msg)
+        }
+    }
+
+    pub fn update(&mut self, request: impl tonic::IntoRequest<UpdateRequest>) -> () {
+        let mut stream = self
+            .rt
+            .block_on(self.client.update(request))
+            .unwrap()
+            .into_inner();
+
+        while let Some(msg) = self.rt.block_on(stream.message()).unwrap() {
+            warning!("{:?}", msg)
+        }
+    }
+
+    pub fn delete(&mut self, request: impl tonic::IntoRequest<DeleteRequest>) -> () {
+        let mut stream = self
+            .rt
+            .block_on(self.client.delete(request))
             .unwrap()
             .into_inner();
 

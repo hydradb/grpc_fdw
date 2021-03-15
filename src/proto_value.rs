@@ -61,7 +61,7 @@ impl ProtoValue {
 
                 Self(value)
             }
-            PgBuiltInOids::INT8OID => {
+            PgBuiltInOids::INT8OID | PgBuiltInOids::INT4OID => {
                 let v = Self::from_datum::<i32>(datum, typeoid).unwrap();
                 let value = prost_types::Value {
                     kind: Some(Kind::NumberValue(v.into())),
@@ -69,7 +69,10 @@ impl ProtoValue {
 
                 Self(value)
             }
-            _ => error!("TODO"),
+            pg_oid => {
+                warning!("Unsupported OID {:?}", pg_oid);
+                error!("FIXME");
+            }
         }
     }
 }

@@ -91,15 +91,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let result = ResultSet {
         values: vec![
             Value {
+                kind: Some(prost_types::value::Kind::NumberValue(1 as f64)),
+            },
+            Value {
                 kind: Some(prost_types::value::Kind::StringValue(
                     "Server Says Hello".into(),
                 )),
             },
             Value {
                 kind: Some(prost_types::value::Kind::StringValue("PG-FDWServer".into())),
-            },
-            Value {
-                kind: Some(prost_types::value::Kind::NumberValue(22 as f64)),
             },
         ],
     };

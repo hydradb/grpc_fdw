@@ -43,7 +43,7 @@ fn into_values(row: Vec<pgx_fdw::Tuple>) -> Vec<prost_types::Value> {
         .map(|(_name, datum, typeoid)| match typeoid {
             PgOid::BuiltIn(built_in) => ProtoValue::from_tuple(built_in, datum, typeoid).0,
             PgOid::Custom(_) => ProtoValue::from_tuple(&PgBuiltInOids::ANYOID, datum, typeoid).0,
-            PgOid::InvalidOid => error!("Invalid Oid"),
+            PgOid::InvalidOid => error!("InvalidOid")
         })
         .collect()
 }
@@ -102,19 +102,36 @@ impl pgx_fdw::ForeignData for GRPCFdw {
 
     fn update(
         &self,
-        _desc: &PgTupleDesc,
-        _row: Vec<pgx_fdw::Tuple>,
-        _indices: Vec<pgx_fdw::Tuple>,
+        desc: &PgTupleDesc,
+        row: Vec<pgx_fdw::Tuple>,
+        indices: Vec<pgx_fdw::Tuple>,
     ) -> Option<Vec<pgx_fdw::Tuple>> {
-        todo!()
+        let mut client = PgBox::<client::Client>::from_pg(self.client);
+        let request = tonic::Request::new(client::pg::UpdateRequest {
+            table: self.table_name.clone(),
+            tupdesc: tupdesc_into_map(desc),
+            tuples: into_values(row),
+            indices: into_values(indices),
+        });
+
+        let _ = client.update(request);
+        None
     }
 
     fn delete(
         &self,
-        _desc: &PgTupleDesc,
-        _indices: Vec<pgx_fdw::Tuple>,
+        desc: &PgTupleDesc,
+        tuples: Vec<pgx_fdw::Tuple>,
     ) -> Option<Vec<pgx_fdw::Tuple>> {
-        todo!()
+        let mut client = PgBox::<client::Client>::from_pg(self.client);
+        let request = tonic::Request::new(client::pg::DeleteRequest {
+            table: self.table_name.clone(),
+            tupdesc: tupdesc_into_map(desc),
+            indices: into_values(tuples),
+        });
+
+        let _ = client.delete(request);
+        None
     }
 }
 
